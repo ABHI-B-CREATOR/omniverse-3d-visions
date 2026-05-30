@@ -30,66 +30,14 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Generate SPA fallback index.html
+      - name: Prepare GitHub Pages
         run: |
-          # TanStack Start builds to dist/client (assets) + dist/server (SSR).
-          # GitHub Pages is static-only — no SSR server can run.
-          # Generate a minimal HTML shell; the client JS hydrates the full app.
-          CSS_FILE=$(basename $(ls dist/client/assets/styles-*.css 2>/dev/null | head -1))
-          # Client entry is the smaller index JS; the larger is the vendor/app chunk
-          ENTRY_JS=$(basename $(ls -S dist/client/assets/index-*.js 2>/dev/null | tail -1))
-          VENDOR_JS=$(basename $(ls -S dist/client/assets/index-*.js 2>/dev/null | head -1))
-
-          cat > dist/client/index.html <<EOF
-          <!DOCTYPE html>
-          <html lang="en">
-            <head>
-              <meta charset="utf-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1" />
-              <title>Omnitrix Codex — 3D Ben 10 Alien Database</title>
-              <meta name="description" content="Explore Ben 10's alien universe in an interactive 3D website." />
-              <link rel="icon" href="/omniverse-3d-visions/favicon.ico" />
-              <link rel="preconnect" href="https://fonts.googleapis.com" />
-              <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-              <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=JetBrains+Mono:wght@400;600&display=swap" />
-              <link rel="stylesheet" href="/omniverse-3d-visions/assets/${CSS_FILE}" />
-              <link rel="modulepreload" href="/omniverse-3d-visions/assets/${VENDOR_JS}" />
-            </head>
-            <body>
-              <script type="module" src="/omniverse-3d-visions/assets/${ENTRY_JS}"></script>
-            </body>
-          </html>
-          EOF
-
-          # Remove leading whitespace from heredoc indentation
-          sed -i 's/^          //' dist/client/index.html
-
-          # Copy as 404.html for SPA client-side routing fallback
-          cp dist/client/index.html dist/client/404.html
-          touch dist/client/.nojekyll
-
-          # PATCH TanStack Start basepath bug using Node.js
-          node -e "
-            const fs = require('fs');
-            const path = require('path');
-            const dir = 'dist/client/assets';
-            const files = fs.readdirSync(dir).filter(f => f.endsWith('.js'));
-            for (const file of files) {
-              const filePath = path.join(dir, file);
-              let content = fs.readFileSync(filePath, 'utf8');
-              const original = content;
-              content = content.replace(/basepath\s*:\s*\"omniverse-3d-visions\"/g, 'basepath:\"/omniverse-3d-visions\"');
-              content = content.replace(/basepath\s*:\s*\'omniverse-3d-visions\'/g, 'basepath:\'/omniverse-3d-visions\'');
-              if (content !== original) {
-                fs.writeFileSync(filePath, content);
-                console.log('Patched basepath in ' + file);
-              }
-            }
-          "
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
 
       - name: Deploy to GitHub Pages (gh-pages branch)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/client
+          publish_dir: ./dist
           force_orphan: true
