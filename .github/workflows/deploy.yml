@@ -68,6 +68,12 @@ jobs:
           cp dist/client/index.html dist/client/404.html
           touch dist/client/.nojekyll
 
+          # PATCH TanStack Start basepath bug
+          # TanStack Start erroneously strips the leading slash from the basepath in the build output,
+          # causing an "Invariant failed" crash because the router fails to match "/omniverse-3d-visions".
+          # We patch it directly in the chunk before deploying.
+          sed -i 's/basepath:"omniverse-3d-visions"/basepath:"\/omniverse-3d-visions"/g' dist/client/assets/${VENDOR_JS}
+
       - name: Deploy to GitHub Pages (gh-pages branch)
         uses: peaceiris/actions-gh-pages@v4
         with:
