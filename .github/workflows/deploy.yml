@@ -40,7 +40,7 @@ jobs:
           ENTRY_JS=$(basename $(ls -S dist/client/assets/index-*.js 2>/dev/null | tail -1))
           VENDOR_JS=$(basename $(ls -S dist/client/assets/index-*.js 2>/dev/null | head -1))
 
-          cat > dist/client/index.html << HTMLEOF
+          cat > dist/client/index.html <<EOF
           <!DOCTYPE html>
           <html lang="en">
             <head>
@@ -59,9 +59,9 @@ jobs:
               <script type="module" src="/omniverse-3d-visions/assets/${ENTRY_JS}"></script>
             </body>
           </html>
-          HTMLEOF
+          EOF
 
-          # Remove leading whitespace from heredoc
+          # Remove leading whitespace from heredoc indentation
           sed -i 's/^          //' dist/client/index.html
 
           # Copy as 404.html for SPA client-side routing fallback
